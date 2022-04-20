@@ -1,6 +1,9 @@
 var cubeRotation = 0.0;
 const speed = 0.1
 
+const invCenter = [0.5,0.5];
+const uDistSq = 0.05;
+
 main();
 
 //
@@ -55,11 +58,20 @@ function main() {
     varying highp vec3 vLighting;
 
     uniform sampler2D uSampler;
+    uniform highp vec2 uCenter;
+    uniform highp float uDistSq;
 
     void main(void) {
       highp vec4 texelColor = texture2D(uSampler, vTextureCoord);
-
-      gl_FragColor = vec4(texelColor.rgb * vLighting, texelColor.a);
+      
+      highp vec2 distV = vTextureCoord - uCenter;
+      highp float v = distV[0] * distV[0] + distV[1] * distV[1];
+      
+      if (v < uDistSq) {
+        gl_FragColor = vec4(0.2,0.2,0.2,1);
+      } else {
+        gl_FragColor = vec4(texelColor.rgb * vLighting, texelColor.a);
+      }
     }
   `;
 
@@ -83,6 +95,8 @@ function main() {
       modelViewMatrix: gl.getUniformLocation(shaderProgram, 'uModelViewMatrix'),
       normalMatrix: gl.getUniformLocation(shaderProgram, 'uNormalMatrix'),
       uSampler: gl.getUniformLocation(shaderProgram, 'uSampler'),
+      uCenter: gl.getUniformLocation(shaderProgram, 'uCenter'),
+      uDistSq: gl.getUniformLocation(shaderProgram, 'uDistSq'),
     }
   };
 
@@ -492,6 +506,9 @@ function drawScene(gl, programInfo, buffers, texture, deltaTime) {
 
   // Tell the shader we bound the texture to texture unit 0
   gl.uniform1i(programInfo.uniformLocations.uSampler, 0);
+
+  gl.uniform2fv(programInfo.uniformLocations.uCenter, new Float32Array(invCenter))
+  gl.uniform1fv(programInfo.uniformLocations.uDistSq, new Float32Array([uDistSq]))
 
   {
     const vertexCount = 36;
