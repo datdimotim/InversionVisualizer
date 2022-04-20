@@ -68,10 +68,21 @@ function main() {
       highp float v = distV[0] * distV[0] + distV[1] * distV[1];
       
       if (v < uDistSq) {
-        gl_FragColor = vec4(0.2,0.2,0.2,1);
+        if (v < uDistSq - 0.003) {
+          highp vec2 dirV = vTextureCoord - uCenter;
+          highp float norm = sqrt(dirV[0] * dirV[0] + dirV[1] * dirV[1]);
+          highp float scaleC = uDistSq / norm / norm;
+          highp vec2 scaledV = dirV * scaleC;
+          texelColor = texture2D(uSampler, scaledV + uCenter);
+          
+          gl_FragColor = texelColor;
+        } else {
+          gl_FragColor = vec4(0.0,0.0,0.0,texelColor.a);
+        }
       } else {
-        gl_FragColor = vec4(texelColor.rgb * vLighting, texelColor.a);
+        gl_FragColor = texelColor;
       }
+        gl_FragColor = vec4(gl_FragColor.rgb * vLighting, gl_FragColor.a);
     }
   `;
 
