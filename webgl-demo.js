@@ -73,9 +73,14 @@ function main() {
           highp float norm = sqrt(dirV[0] * dirV[0] + dirV[1] * dirV[1]);
           highp float scaleC = uDistSq / norm / norm;
           highp vec2 scaledV = dirV * scaleC;
-          texelColor = texture2D(uSampler, scaledV + uCenter);
+          highp vec2 inversedV = scaledV + uCenter;
           
-          gl_FragColor = texelColor;
+          if (inversedV[0] > 1.0 || inversedV[0] < 0.0 || inversedV[1] > 1.0 || inversedV[1] < 0.0) {
+            gl_FragColor = vec4(0,0,0,texelColor.a);
+          } else {
+            texelColor = texture2D(uSampler, inversedV);
+            gl_FragColor = texelColor;
+          }
         } else {
           gl_FragColor = vec4(0.0,0.0,0.0,texelColor.a);
         }
