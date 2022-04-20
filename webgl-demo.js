@@ -365,7 +365,7 @@ function loadTexture(gl, url) {
     }
   };
   image.src = url;
-
+  image.crossOrigin = "anonymous";
   return texture;
 }
 
