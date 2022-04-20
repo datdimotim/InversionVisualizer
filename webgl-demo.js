@@ -1,4 +1,5 @@
 var cubeRotation = 0.0;
+const speed = 0.1
 
 main();
 
@@ -89,7 +90,7 @@ function main() {
   // objects we'll be drawing.
   const buffers = initBuffers(gl);
 
-  const texture = loadTexture(gl, 'cubetexture.png');
+  const texture = loadTexture(gl, 'chess.jpg');
 
   var then = 0;
 
@@ -501,7 +502,7 @@ function drawScene(gl, programInfo, buffers, texture, deltaTime) {
 
   // Update the rotation for the next draw
 
-  cubeRotation += deltaTime;
+  cubeRotation += deltaTime * speed;
 }
 
 //
