@@ -1,8 +1,11 @@
+// angle state of animation
 var cubeRotation = 0.0;
-const speed = 0.1
+const speed = 0.0
+// angle of view
+const aperture = 45;
 
 const invCenter = [0.5,0.5];
-const uDistSq = 0.05;
+const uDistSq = 0.01;
 
 main();
 
@@ -393,7 +396,7 @@ function drawScene(gl, programInfo, buffers, texture, deltaTime) {
   // and we only want to see objects between 0.1 units
   // and 100 units away from the camera.
 
-  const fieldOfView = 45 * Math.PI / 180;   // in radians
+  const fieldOfView = aperture * Math.PI / 180;   // in radians
   const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
   const zNear = 0.1;
   const zFar = 100.0;
@@ -413,10 +416,9 @@ function drawScene(gl, programInfo, buffers, texture, deltaTime) {
 
   // Now move the drawing position a bit to where we want to
   // start drawing the square.
-
   mat4.translate(modelViewMatrix,     // destination matrix
                  modelViewMatrix,     // matrix to translate
-                 [-0.0, 0.0, -6.0]);  // amount to translate
+                 [-0.0, 0.0, -1 - 1 / Math.tan(aperture/2 * Math.PI / 180)]);  // amount to translate
   mat4.rotate(modelViewMatrix,  // destination matrix
               modelViewMatrix,  // matrix to rotate
               cubeRotation,     // amount to rotate in radians
