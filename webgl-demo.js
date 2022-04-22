@@ -12,6 +12,9 @@ const viewDistance = 1 / Math.tan(aperture/2 * Math.PI / 180);
 const screenToModelMatrix = mat4.create();
 const modelToScreenMatrix = mat4.create();
 
+let texture = null;
+
+
 function moveCircle(x, y) {
   const screenDist = new Float32Array([1,1,1,1]);
   mat4.multiply(screenDist, modelToScreenMatrix, screenDist);
@@ -32,6 +35,8 @@ function moveCircle(x, y) {
 
 /////////
 const canvas = document.querySelector('#glcanvas');
+const gl = canvas.getContext('webgl');
+
 canvas.addEventListener('mousemove', e => {
     moveCircle(-1 + 2 * e.offsetX/canvas.clientWidth, 1 - 2 * e.offsetY/canvas.clientHeight);
 });
@@ -41,6 +46,26 @@ canvas.addEventListener('touchmove', e => {
 canvas.addEventListener("wheel", event => {
   uDistSq = Math.pow(Math.sqrt(uDistSq) + event.deltaY / 1000, 2);
 });
+
+const selectBtn = document.getElementById("selectBtn");
+const urlInput = document.getElementById("urlInput")
+selectBtn.onclick = () => {
+  const url = urlInput.value;
+  texture = loadTexture(gl, url);
+}
+
+document.getElementById('localFileInput').onchange = function (evt) {
+  var tgt = evt.target || window.event.srcElement,
+      files = tgt.files;
+  // FileReader support
+  if (FileReader && files && files.length) {
+    var fr = new FileReader();
+    fr.onload = () => {
+      texture = loadTexture(gl, fr.result)
+    }
+    fr.readAsDataURL(files[0]);
+  }
+}
 /////////
 
 main();
@@ -49,9 +74,6 @@ main();
 // Start here
 //
 function main() {
-  const canvas = document.querySelector('#glcanvas');
-  const gl = canvas.getContext('webgl');
-
   // If we don't have a GL context, give up now
 
   if (!gl) {
@@ -161,7 +183,7 @@ function main() {
   // objects we'll be drawing.
   const buffers = initBuffers(gl);
 
-  const texture = loadTexture(gl, 'chess.jpg');
+  texture = loadTexture(gl, 'chess.jpg');
 
   var then = 0;
 
