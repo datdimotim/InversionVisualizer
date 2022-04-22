@@ -6,7 +6,8 @@
 	bottom: 0;
 	right: 0;
 	overflow: hidden;
-	background: lime; /* Just to visualize the extent */
+	display: flex;
+	flex-direction: column;
 }
 
 .match-parent {
