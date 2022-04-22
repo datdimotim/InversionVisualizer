@@ -5,7 +5,8 @@ const speed = 0.0
 const aperture = 45;
 
 let invCenter = [0.5,0.5];
-const uDistSq = 0.06;
+let uDistSq = 0.06;
+const uWidth = 0.004;
 
 const viewDistance = 1 / Math.tan(aperture/2 * Math.PI / 180);
 const screenToModelMatrix = mat4.create();
@@ -35,6 +36,9 @@ canvas.addEventListener('mousemove', e => {
   //if (e === true) {
     moveCircle(-1 + 2 * e.offsetX/canvas.clientWidth, 1 - 2 * e.offsetY/canvas.clientHeight);
   //}
+});
+canvas.addEventListener("wheel", event => {
+  uDistSq = Math.pow(Math.sqrt(uDistSq) + event.deltaY / 1000, 2);
 });
 /////////
 
@@ -94,6 +98,7 @@ function main() {
     uniform sampler2D uSampler;
     uniform highp vec2 uCenter;
     uniform highp float uDistSq;
+    uniform highp float uWidth;
 
     void main(void) {
       highp vec4 texelColor = texture2D(uSampler, vTextureCoord);
@@ -102,7 +107,7 @@ function main() {
       highp float v = distV[0] * distV[0] + distV[1] * distV[1];
       
       if (v < uDistSq) {
-        if (v < uDistSq - 0.003) {
+        if (sqrt(v) < sqrt(uDistSq) - uWidth) {
           highp vec2 dirV = vTextureCoord - uCenter;
           highp float norm = sqrt(dirV[0] * dirV[0] + dirV[1] * dirV[1]);
           highp float scaleC = uDistSq / norm / norm;
@@ -147,6 +152,7 @@ function main() {
       uSampler: gl.getUniformLocation(shaderProgram, 'uSampler'),
       uCenter: gl.getUniformLocation(shaderProgram, 'uCenter'),
       uDistSq: gl.getUniformLocation(shaderProgram, 'uDistSq'),
+      uWidth: gl.getUniformLocation(shaderProgram, 'uWidth'),
     }
   };
 
@@ -561,6 +567,7 @@ function drawScene(gl, programInfo, buffers, texture, deltaTime) {
 
   gl.uniform2fv(programInfo.uniformLocations.uCenter, new Float32Array(invCenter))
   gl.uniform1fv(programInfo.uniformLocations.uDistSq, new Float32Array([uDistSq]))
+  gl.uniform1fv(programInfo.uniformLocations.uWidth, new Float32Array([uWidth]))
 
   {
     const vertexCount = 36;
