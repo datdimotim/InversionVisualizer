@@ -4,8 +4,39 @@ const speed = 0.0
 // angle of view
 const aperture = 45;
 
-const invCenter = [0.5,0.5];
-const uDistSq = 0.01;
+let invCenter = [0.5,0.5];
+const uDistSq = 0.06;
+
+const viewDistance = 1 / Math.tan(aperture/2 * Math.PI / 180);
+const screenToModelMatrix = mat4.create();
+const modelToScreenMatrix = mat4.create();
+
+function moveCircle(x, y) {
+  const screenDist = new Float32Array([1,1,1,1]);
+  mat4.multiply(screenDist, modelToScreenMatrix, screenDist);
+  const dist = screenDist[2]/screenDist[3];
+
+  const vec = new Float32Array([x,y,dist,1])
+  mat4.multiply(vec, screenToModelMatrix, vec);
+
+  xModel = vec[0]/vec[3]
+  yModel = vec[1]/vec[3]
+
+  xTexture = (xModel + 1) / 2
+  yTexture = (yModel + 1) / 2
+
+  console.log([xTexture,yTexture])
+  invCenter = [xTexture, yTexture]
+}
+
+/////////
+const canvas = document.querySelector('#glcanvas');
+canvas.addEventListener('mousemove', e => {
+  //if (e === true) {
+    moveCircle(-1 + 2 * e.offsetX/canvas.clientWidth, 1 - 2 * e.offsetY/canvas.clientHeight);
+  //}
+});
+/////////
 
 main();
 
@@ -418,7 +449,7 @@ function drawScene(gl, programInfo, buffers, texture, deltaTime) {
   // start drawing the square.
   mat4.translate(modelViewMatrix,     // destination matrix
                  modelViewMatrix,     // matrix to translate
-                 [-0.0, 0.0, -1 - 1 / Math.tan(aperture/2 * Math.PI / 180)]);  // amount to translate
+                 [-0.0, 0.0, -1 - viewDistance]);  // amount to translate
   mat4.rotate(modelViewMatrix,  // destination matrix
               modelViewMatrix,  // matrix to rotate
               cubeRotation,     // amount to rotate in radians
@@ -431,6 +462,9 @@ function drawScene(gl, programInfo, buffers, texture, deltaTime) {
   const normalMatrix = mat4.create();
   mat4.invert(normalMatrix, modelViewMatrix);
   mat4.transpose(normalMatrix, normalMatrix);
+
+  mat4.multiply(modelToScreenMatrix,projectionMatrix,modelViewMatrix);
+  mat4.invert(screenToModelMatrix,modelToScreenMatrix);
 
   // Tell WebGL how to pull out the positions from the position
   // buffer into the vertexPosition attribute
