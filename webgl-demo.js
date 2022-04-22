@@ -27,7 +27,7 @@ function moveCircle(x, y) {
   yModel = vec[1]/vec[3]
 
   xTexture = (xModel + 1) / 2
-  yTexture = (yModel + 1) / 2
+  yTexture = (-yModel + 1) / 2
 
   console.log([xTexture,yTexture])
   invCenter = [xTexture, yTexture]
@@ -316,10 +316,10 @@ function initBuffers(gl) {
 
   const textureCoordinates = [
     // Front
-    0.0,  0.0,
-    1.0,  0.0,
-    1.0,  1.0,
     0.0,  1.0,
+    1.0,  1.0,
+    1.0,  0.0,
+    0.0,  0.0,
     // Back
     0.0,  0.0,
     1.0,  0.0,
