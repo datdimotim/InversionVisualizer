@@ -33,9 +33,10 @@ function moveCircle(x, y) {
 /////////
 const canvas = document.querySelector('#glcanvas');
 canvas.addEventListener('mousemove', e => {
-  //if (e === true) {
     moveCircle(-1 + 2 * e.offsetX/canvas.clientWidth, 1 - 2 * e.offsetY/canvas.clientHeight);
-  //}
+});
+canvas.addEventListener('touchmove', e => {
+  moveCircle(-1 + 2 * e.offsetX/canvas.clientWidth, 1 - 2 * e.offsetY/canvas.clientHeight);
 });
 canvas.addEventListener("wheel", event => {
   uDistSq = Math.pow(Math.sqrt(uDistSq) + event.deltaY / 1000, 2);
