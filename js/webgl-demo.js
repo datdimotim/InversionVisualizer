@@ -40,7 +40,8 @@ canvas.addEventListener('mousemove', e => {
     moveCircle(-1 + 2 * e.offsetX/canvas.clientWidth, 1 - 2 * e.offsetY/canvas.clientHeight);
 });
 canvas.addEventListener('touchmove', e => {
-  moveCircle(-1 + 2 * e.offsetX/canvas.clientWidth, 1 - 2 * e.offsetY/canvas.clientHeight);
+  e = e.changedTouches[0];
+  moveCircle(-1 + 2 * e.clientX/canvas.clientWidth, 1 - 2 * e.clientY/canvas.clientHeight);
 });
 canvas.addEventListener("wheel", event => {
   uDistSq = Math.pow(Math.sqrt(uDistSq) + event.deltaY / 1000, 2);
@@ -69,97 +70,17 @@ document.getElementById('localFileInput').onchange = function (evt) {
 
 main();
 
-//
-// Start here
-//
 function main() {
-  // If we don't have a GL context, give up now
-
   if (!gl) {
     alert('Unable to initialize WebGL. Your browser or machine may not support it.');
     return;
   }
 
-  // Vertex shader program
+  const vsSource = shaders.vertexShader;
+  const fsSource = shaders.fragmentShader;
 
-  const vsSource = `
-    attribute vec4 aVertexPosition;
-    attribute vec3 aVertexNormal;
-    attribute vec2 aTextureCoord;
-
-    uniform mat4 uNormalMatrix;
-    uniform mat4 uModelViewMatrix;
-    uniform mat4 uProjectionMatrix;
-
-    varying highp vec2 vTextureCoord;
-    varying highp vec3 vLighting;
-
-    void main(void) {
-      gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
-      vTextureCoord = aTextureCoord;
-
-      // Apply lighting effect
-
-      highp vec3 ambientLight = vec3(0.3, 0.3, 0.3);
-      highp vec3 directionalLightColor = vec3(1, 1, 1);
-      highp vec3 directionalVector = normalize(vec3(0.85, 0.8, 0.75));
-
-      highp vec4 transformedNormal = uNormalMatrix * vec4(aVertexNormal, 1.0);
-
-      highp float directional = max(dot(transformedNormal.xyz, directionalVector), 0.0);
-      vLighting = ambientLight + (directionalLightColor * directional);
-    }
-  `;
-
-  // Fragment shader program
-
-  const fsSource = `
-    varying highp vec2 vTextureCoord;
-    varying highp vec3 vLighting;
-
-    uniform sampler2D uSampler;
-    uniform highp vec2 uCenter;
-    uniform highp float uDistSq;
-    uniform highp float uWidth;
-
-    void main(void) {
-      highp vec4 texelColor = texture2D(uSampler, vTextureCoord);
-      
-      highp vec2 distV = vTextureCoord - uCenter;
-      highp float v = distV[0] * distV[0] + distV[1] * distV[1];
-      
-      if (v < uDistSq) {
-        if (sqrt(v) < sqrt(uDistSq) - uWidth) {
-          highp vec2 dirV = vTextureCoord - uCenter;
-          highp float norm = sqrt(dirV[0] * dirV[0] + dirV[1] * dirV[1]);
-          highp float scaleC = uDistSq / norm / norm;
-          highp vec2 scaledV = dirV * scaleC;
-          highp vec2 inversedV = scaledV + uCenter;
-          
-          if (inversedV[0] > 1.0 || inversedV[0] < 0.0 || inversedV[1] > 1.0 || inversedV[1] < 0.0) {
-            gl_FragColor = vec4(0,0,0,texelColor.a);
-          } else {
-            texelColor = texture2D(uSampler, inversedV);
-            gl_FragColor = texelColor;
-          }
-        } else {
-          gl_FragColor = vec4(0.0,0.0,0.0,texelColor.a);
-        }
-      } else {
-        gl_FragColor = texelColor;
-      }
-        gl_FragColor = vec4(gl_FragColor.rgb * vLighting, gl_FragColor.a);
-    }
-  `;
-
-  // Initialize a shader program; this is where all the lighting
-  // for the vertices and so forth is established.
   const shaderProgram = initShaderProgram(gl, vsSource, fsSource);
 
-  // Collect all the info needed to use the shader program.
-  // Look up which attributes our shader program is using
-  // for aVertexPosition, aVertexNormal, aTextureCoord,
-  // and look up uniform locations.
   const programInfo = {
     program: shaderProgram,
     attribLocations: {
@@ -178,15 +99,12 @@ function main() {
     }
   };
 
-  // Here's where we call the routine that builds all the
-  // objects we'll be drawing.
   const buffers = initBuffers(gl);
 
   texture = loadTexture(gl, 'chess.jpg');
 
   var then = 0;
 
-  // Draw the scene repeatedly
   function render(now) {
     now *= 0.001;  // convert to seconds
     const deltaTime = now - then;
@@ -199,158 +117,30 @@ function main() {
   requestAnimationFrame(render);
 }
 
-//
-// initBuffers
-//
-// Initialize the buffers we'll need. For this demo, we just
-// have one object -- a simple three-dimensional cube.
-//
 function initBuffers(gl) {
-
-  // Create a buffer for the cube's vertex positions.
-
   const positionBuffer = gl.createBuffer();
-
-  // Select the positionBuffer as the one to apply buffer
-  // operations to from here out.
 
   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
 
-  // Now create an array of positions for the cube.
-
-  const positions = [
-    // Front face
-    -1.0, -1.0,  1.0,
-     1.0, -1.0,  1.0,
-     1.0,  1.0,  1.0,
-    -1.0,  1.0,  1.0,
-
-    // Back face
-    -1.0, -1.0, -1.0,
-    -1.0,  1.0, -1.0,
-     1.0,  1.0, -1.0,
-     1.0, -1.0, -1.0,
-
-    // Top face
-    -1.0,  1.0, -1.0,
-    -1.0,  1.0,  1.0,
-     1.0,  1.0,  1.0,
-     1.0,  1.0, -1.0,
-
-    // Bottom face
-    -1.0, -1.0, -1.0,
-     1.0, -1.0, -1.0,
-     1.0, -1.0,  1.0,
-    -1.0, -1.0,  1.0,
-
-    // Right face
-     1.0, -1.0, -1.0,
-     1.0,  1.0, -1.0,
-     1.0,  1.0,  1.0,
-     1.0, -1.0,  1.0,
-
-    // Left face
-    -1.0, -1.0, -1.0,
-    -1.0, -1.0,  1.0,
-    -1.0,  1.0,  1.0,
-    -1.0,  1.0, -1.0,
-  ];
-
-  // Now pass the list of positions into WebGL to build the
-  // shape. We do this by creating a Float32Array from the
-  // JavaScript array, then use it to fill the current buffer.
+  const positions = cubeModel.vertexes;
 
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
-
-  // Set up the normals for the vertices, so that we can compute lighting.
 
   const normalBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
 
-  const vertexNormals = [
-    // Front
-     0.0,  0.0,  1.0,
-     0.0,  0.0,  1.0,
-     0.0,  0.0,  1.0,
-     0.0,  0.0,  1.0,
-
-    // Back
-     0.0,  0.0, -1.0,
-     0.0,  0.0, -1.0,
-     0.0,  0.0, -1.0,
-     0.0,  0.0, -1.0,
-
-    // Top
-     0.0,  1.0,  0.0,
-     0.0,  1.0,  0.0,
-     0.0,  1.0,  0.0,
-     0.0,  1.0,  0.0,
-
-    // Bottom
-     0.0, -1.0,  0.0,
-     0.0, -1.0,  0.0,
-     0.0, -1.0,  0.0,
-     0.0, -1.0,  0.0,
-
-    // Right
-     1.0,  0.0,  0.0,
-     1.0,  0.0,  0.0,
-     1.0,  0.0,  0.0,
-     1.0,  0.0,  0.0,
-
-    // Left
-    -1.0,  0.0,  0.0,
-    -1.0,  0.0,  0.0,
-    -1.0,  0.0,  0.0,
-    -1.0,  0.0,  0.0
-  ];
+  const vertexNormals = cubeModel.normals;
 
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexNormals),
                 gl.STATIC_DRAW);
 
-  // Now set up the texture coordinates for the faces.
-
   const textureCoordBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, textureCoordBuffer);
 
-  const textureCoordinates = [
-    // Front
-    0.0,  1.0,
-    1.0,  1.0,
-    1.0,  0.0,
-    0.0,  0.0,
-    // Back
-    0.0,  0.0,
-    1.0,  0.0,
-    1.0,  1.0,
-    0.0,  1.0,
-    // Top
-    0.0,  0.0,
-    1.0,  0.0,
-    1.0,  1.0,
-    0.0,  1.0,
-    // Bottom
-    0.0,  0.0,
-    1.0,  0.0,
-    1.0,  1.0,
-    0.0,  1.0,
-    // Right
-    0.0,  0.0,
-    1.0,  0.0,
-    1.0,  1.0,
-    0.0,  1.0,
-    // Left
-    0.0,  0.0,
-    1.0,  0.0,
-    1.0,  1.0,
-    0.0,  1.0,
-  ];
+  const textureCoordinates = cubeModel.texCoords;
 
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textureCoordinates),
                 gl.STATIC_DRAW);
-
-  // Build the element array buffer; this specifies the indices
-  // into the vertex arrays for each face's vertices.
 
   const indexBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
@@ -358,18 +148,7 @@ function initBuffers(gl) {
   // This array defines each face as two triangles, using the
   // indices into the vertex array to specify each triangle's
   // position.
-
-  const indices = [
-    0,  1,  2,      0,  2,  3,    // front
-    4,  5,  6,      4,  6,  7,    // back
-    8,  9,  10,     8,  10, 11,   // top
-    12, 13, 14,     12, 14, 15,   // bottom
-    16, 17, 18,     16, 18, 19,   // right
-    20, 21, 22,     20, 22, 23,   // left
-  ];
-
-  // Now send the element array to GL
-
+  const indices = cubeModel.indices;
   gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,
       new Uint16Array(indices), gl.STATIC_DRAW);
 
@@ -381,18 +160,9 @@ function initBuffers(gl) {
   };
 }
 
-//
-// Initialize a texture and load an image.
-// When the image finished loading copy it into the texture.
-//
+
 function loadTexture(gl, url) {
   const texture = gl.createTexture();
-
-  // Because images have to be download over the internet
-  // they might take a moment until they are ready.
-  // Until then put a single pixel in the texture so we can
-  // use it immediately. When the image has finished downloading
-  // we'll update the texture with the contents of the image.
 
   const image = new Image();
   image.onload = function() {
@@ -413,15 +183,9 @@ function loadTexture(gl, url) {
     gl.texImage2D(gl.TEXTURE_2D, level, internalFormat,
                   srcFormat, srcType, image);
 
-    // WebGL1 has different requirements for power of 2 images
-    // vs non power of 2 images so check if the image is a
-    // power of 2 in both dimensions.
     if (isPowerOf2(image.width) && isPowerOf2(image.height)) {
-       // Yes, it's a power of 2. Generate mips.
        gl.generateMipmap(gl.TEXTURE_2D);
     } else {
-       // No, it's not a power of 2. Turn of mips and set
-       // wrapping to clamp to edge
        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
@@ -436,25 +200,13 @@ function isPowerOf2(value) {
   return (value & (value - 1)) == 0;
 }
 
-//
-// Draw the scene.
-//
 function drawScene(gl, programInfo, buffers, texture, deltaTime) {
   gl.clearColor(0.0, 0.0, 0.0, 1.0);  // Clear to black, fully opaque
   gl.clearDepth(1.0);                 // Clear everything
   gl.enable(gl.DEPTH_TEST);           // Enable depth testing
   gl.depthFunc(gl.LEQUAL);            // Near things obscure far things
 
-  // Clear the canvas before we start drawing on it.
-
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-  // Create a perspective matrix, a special matrix that is
-  // used to simulate the distortion of perspective in a camera.
-  // Our field of view is 45 degrees, with a width/height
-  // ratio that matches the display size of the canvas
-  // and we only want to see objects between 0.1 units
-  // and 100 units away from the camera.
 
   const fieldOfView = aperture * Math.PI / 180;   // in radians
   const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
@@ -462,23 +214,17 @@ function drawScene(gl, programInfo, buffers, texture, deltaTime) {
   const zFar = 100.0;
   const projectionMatrix = mat4.create();
 
-  // note: glmatrix.js always has the first argument
-  // as the destination to receive the result.
   mat4.perspective(projectionMatrix,
                    fieldOfView,
                    aspect,
                    zNear,
                    zFar);
 
-  // Set the drawing position to the "identity" point, which is
-  // the center of the scene.
   const modelViewMatrix = mat4.create();
 
   const factor = aspect < 1 ? aspect : 1
   viewDistance = 1 / Math.tan(factor * aperture/2 * Math.PI / 180)
 
-  // Now move the drawing position a bit to where we want to
-  // start drawing the square.
   mat4.translate(modelViewMatrix,     // destination matrix
                  modelViewMatrix,     // matrix to translate
                  [-0.0, 0.0, -1 - viewDistance]);  // amount to translate
