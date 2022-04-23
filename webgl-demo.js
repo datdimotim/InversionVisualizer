@@ -8,7 +8,7 @@ let invCenter = [0.5,0.5];
 let uDistSq = 0.06;
 const uWidth = 0.004;
 
-const viewDistance = 1 / Math.tan(aperture/2 * Math.PI / 180);
+let viewDistance = 1;
 const screenToModelMatrix = mat4.create();
 const modelToScreenMatrix = mat4.create();
 
@@ -29,7 +29,6 @@ function moveCircle(x, y) {
   xTexture = (xModel + 1) / 2
   yTexture = (-yModel + 1) / 2
 
-  console.log([xTexture,yTexture])
   invCenter = [xTexture, yTexture]
 }
 
@@ -474,6 +473,9 @@ function drawScene(gl, programInfo, buffers, texture, deltaTime) {
   // Set the drawing position to the "identity" point, which is
   // the center of the scene.
   const modelViewMatrix = mat4.create();
+
+  const factor = aspect < 1 ? aspect : 1
+  viewDistance = 1 / Math.tan(factor * aperture/2 * Math.PI / 180)
 
   // Now move the drawing position a bit to where we want to
   // start drawing the square.
