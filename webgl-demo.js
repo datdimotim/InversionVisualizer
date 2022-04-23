@@ -35,7 +35,7 @@ function moveCircle(x, y) {
 
 /////////
 const canvas = document.querySelector('#glcanvas');
-const gl = canvas.getContext('webgl');
+const gl = canvas.getContext('webgl2');
 
 canvas.addEventListener('mousemove', e => {
     moveCircle(-1 + 2 * e.offsetX/canvas.clientWidth, 1 - 2 * e.offsetY/canvas.clientHeight);
@@ -400,7 +400,7 @@ function loadTexture(gl, url) {
     gl.bindTexture(gl.TEXTURE_2D, texture);
     const level = 0;
     const internalFormat = gl.RGBA;
-    const width = 0.3;
+    const width = 1;
     const height = 1;
     const border = 0;
     const srcFormat = gl.RGBA;
