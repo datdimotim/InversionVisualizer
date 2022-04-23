@@ -41,6 +41,7 @@ canvas.addEventListener('mousemove', e => {
 });
 canvas.addEventListener('touchmove', e => {
   e = e.changedTouches[0];
+  // TODO: get relative coords
   moveCircle(-1 + 2 * e.clientX/canvas.clientWidth, 1 - 2 * e.clientY/canvas.clientHeight);
 });
 canvas.addEventListener("wheel", event => {
@@ -49,19 +50,22 @@ canvas.addEventListener("wheel", event => {
 
 const selectBtn = document.getElementById("selectBtn");
 const urlInput = document.getElementById("urlInput")
-selectBtn.onclick = () => {
+selectBtn.onclick = async () => {
   const url = urlInput.value;
-  texture = loadTexture(gl, url);
+  const convertedUrl = await resizeImage(url);
+  texture = loadTexture(gl, convertedUrl);
 }
 
-document.getElementById('localFileInput').onchange = function (evt) {
+// TODO: not working when select same image
+document.getElementById('localFileInput').onchange = async function (evt) {
   var tgt = evt.target || window.event.srcElement,
       files = tgt.files;
   // FileReader support
   if (FileReader && files && files.length) {
     var fr = new FileReader();
-    fr.onload = () => {
-      texture = loadTexture(gl, fr.result)
+    fr.onload = async () => {
+      const convertedUrl = await resizeImage(fr.result)
+      texture = loadTexture(gl, convertedUrl)
     }
     fr.readAsDataURL(files[0]);
   }
