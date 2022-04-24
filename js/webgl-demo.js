@@ -41,8 +41,8 @@ canvas.addEventListener('mousemove', e => {
 });
 canvas.addEventListener('touchmove', e => {
   e = e.changedTouches[0];
-  // TODO: get relative coords
-  moveCircle(-1 + 2 * e.clientX/canvas.clientWidth, 1 - 2 * e.clientY/canvas.clientHeight);
+  const rect = canvas.getBoundingClientRect();
+  moveCircle(-1 + 2 * (e.clientX-rect.left)/canvas.clientWidth, 1 - 2 * (e.clientY-rect.top)/canvas.clientHeight);
 });
 canvas.addEventListener("wheel", event => {
   uDistSq = Math.pow(Math.sqrt(uDistSq) + event.deltaY / 1000, 2);
