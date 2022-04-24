@@ -64,7 +64,7 @@ const shaders = {
       } else {
         gl_FragColor = texelColor;
       }
-        gl_FragColor = vec4(gl_FragColor.rgb * vLighting, gl_FragColor.a);
+        // gl_FragColor = vec4(gl_FragColor.rgb * vLighting, gl_FragColor.a);
     }
   `
 }
