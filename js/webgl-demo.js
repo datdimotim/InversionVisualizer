@@ -56,7 +56,7 @@ selectBtn.onclick = async () => {
   texture = loadTexture(gl, convertedUrl);
 }
 
-// TODO: not working when select same image
+document.getElementById('localFileInput').onclick = function () {this.value = null};
 document.getElementById('localFileInput').onchange = async function (evt) {
   var tgt = evt.target || window.event.srcElement,
       files = tgt.files;
